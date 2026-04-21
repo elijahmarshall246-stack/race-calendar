@@ -117,5 +117,15 @@
   };
 
   erLoad();
+
+  function resizeParent(){
+    window.parent.postMessage({ height: document.getElementById('race-cal').scrollHeight + 40 }, '*');
+  }
+  window.addEventListener('resize', function(){ setTimeout(resizeParent, 100); });
+  var _orig = renderCards;
+  renderCards = function(events){
+    _orig(events);
+    setTimeout(resizeParent, 200);
+  };
 })();
 </script>
