@@ -1,0 +1,137 @@
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  @keyframes er-spin { to { transform: rotate(360deg); } }
+  .er-spin { animation: er-spin 0.7s linear infinite; }
+</style>
+
+<div id="race-cal" style="font-family:'DM Sans',sans-serif;background:#F1592A;border-radius:12px;padding:20px;">
+
+  <!-- Header -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:16px;">
+    <tr>
+      <td style="font-size:12px;font-weight:500;color:rgba(255,255,255,0.7);letter-spacing:0.1em;text-transform:uppercase;font-family:'DM Sans',sans-serif;">RACE CALENDAR</td>
+      <td align="right" id="er-count" style="font-family:'DM Mono',monospace;font-size:12px;color:rgba(255,255,255,0.5);"></td>
+    </tr>
+  </table>
+
+  <!-- Filters -->
+  <div id="er-filters" style="display:none;margin-bottom:16px;"></div>
+
+  <!-- State -->
+  <div id="er-state" style="text-align:center;padding:40px 0;color:rgba(255,255,255,0.6);font-size:14px;font-family:'DM Sans',sans-serif;">
+    <div class="er-spin" style="display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;margin-bottom:8px;"></div><br>Loading events…
+  </div>
+
+  <!-- Cards -->
+  <div id="er-cards"></div>
+
+</div>
+
+<script>
+(function(){
+  var API = "https://script.google.com/macros/s/AKfycbxH1rEXqWQW248kv8BOFsPSNbHP6hQylmXBKCNefJPCNWqGlDFGy12Fwqu-iDlqigq3/exec";
+  var all = [];
+
+  var BADGES = {
+    race:      {bg:"rgba(7,74,119,0.5)",  label:"Race day"},
+    qualifier: {bg:"rgba(0,0,0,0.2)",     label:"Qualifier"},
+    special:   {bg:"rgba(7,74,119,0.5)",  label:"Special event"},
+    endurance: {bg:"rgba(0,0,0,0.2)",     label:"Endurance"}
+  };
+
+  function getBadge(type){
+    var k=(type||"").toLowerCase();
+    return BADGES[k]||{bg:"rgba(0,0,0,0.15)",label:type||"Event"};
+  }
+
+  function cardHTML(ev){
+    var b=getBadge(ev.type);
+    return '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#E8491E;border:1px solid rgba(255,255,255,0.3);border-radius:10px;margin-bottom:12px;padding:0;">'
+      +'<tr><td style="padding:16px;">'
+
+        // Top row: date block + badge
+        +'<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:12px;">'
+        +'<tr>'
+        +'<td width="60" valign="top">'
+          +'<table cellpadding="0" cellspacing="0" border="0" style="background:#074A77;border-radius:8px;text-align:center;width:56px;">'
+          +'<tr><td style="padding:6px 10px 2px;font-family:\'DM Mono\',monospace;font-size:10px;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.05em;">'+(ev.month||"—")+'</td></tr>'
+          +'<tr><td style="padding:0 10px 8px;font-family:\'DM Mono\',monospace;font-size:24px;font-weight:500;color:#fff;line-height:1;">'+(ev.day||"—")+'</td></tr>'
+          +'</table>'
+        +'</td>'
+        +'<td valign="top" align="right">'
+          +'<span style="font-size:11px;font-weight:500;padding:3px 10px;border-radius:99px;background:'+b.bg+';color:#fff;font-family:\'DM Sans\',sans-serif;white-space:nowrap;">'+b.label+'</span>'
+        +'</td>'
+        +'</tr>'
+        +'</table>'
+
+        // Event name
+        +'<div style="font-size:15px;font-weight:500;color:#fff;line-height:1.4;margin-bottom:6px;font-family:\'DM Sans\',sans-serif;">'+(ev.name||"Untitled")+'</div>'
+
+        // Description
+        +(ev.desc?'<div style="font-size:13px;color:rgba(255,255,255,0.85);line-height:1.6;margin-bottom:10px;font-family:\'DM Sans\',sans-serif;">'+ev.desc+'</div>':'')
+
+        // Footer: time
+        +'<div style="border-top:1px solid rgba(255,255,255,0.2);padding-top:8px;font-family:\'DM Mono\',monospace;font-size:12px;color:rgba(255,255,255,0.8);">'
+        +'&#9679; '+(ev.time||"TBA")
+        +(ev.year?' &nbsp;·&nbsp; <span style="color:rgba(255,255,255,0.5);">'+ev.year+'</span>':'')
+        +'</div>'
+
+      +'</td></tr></table>';
+  }
+
+  function renderCards(events){
+    var grid=document.getElementById("er-cards");
+    var count=document.getElementById("er-count");
+    count.innerHTML=events.length+(events.length===1?" event":" events");
+    if(!events.length){ grid.innerHTML='<div style="text-align:center;padding:30px;color:rgba(255,255,255,0.5);font-size:14px;">No events found.</div>'; return; }
+    grid.innerHTML=events.map(cardHTML).join("");
+  }
+
+  function renderFilters(events){
+    var types=[...new Set(events.map(function(e){return (e.type||"").toLowerCase();}).filter(Boolean))];
+    var el=document.getElementById("er-filters");
+    el.style.display="block";
+    var base="font-size:12px;padding:5px 14px;border-radius:99px;cursor:pointer;font-family:'DM Sans',sans-serif;margin:0 4px 4px 0;border:1px solid rgba(255,255,255,0.35);background:transparent;color:rgba(255,255,255,0.75);";
+    var active="font-size:12px;padding:5px 14px;border-radius:99px;cursor:pointer;font-family:'DM Sans',sans-serif;margin:0 4px 4px 0;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.18);color:#fff;font-weight:500;";
+    el.innerHTML='<button id="fb-all" style="'+active+'" onclick="erF(\'all\')">All</button>'
+      +types.map(function(t){
+        var lbl=BADGES[t]?BADGES[t].label:t.charAt(0).toUpperCase()+t.slice(1);
+        return '<button id="fb-'+t+'" style="'+base+'" onclick="erF(\''+t+'\')">'+lbl+'</button>';
+      }).join("");
+  }
+
+  window.erF=function(type){
+    var base="font-size:12px;padding:5px 14px;border-radius:99px;cursor:pointer;font-family:'DM Sans',sans-serif;margin:0 4px 4px 0;border:1px solid rgba(255,255,255,0.35);background:transparent;color:rgba(255,255,255,0.75);";
+    var active="font-size:12px;padding:5px 14px;border-radius:99px;cursor:pointer;font-family:'DM Sans',sans-serif;margin:0 4px 4px 0;border:1px solid rgba(255,255,255,0.7);background:rgba(255,255,255,0.18);color:#fff;font-weight:500;";
+    document.querySelectorAll("#er-filters button").forEach(function(b){
+      b.style.cssText=b.id==="fb-"+type?active:base;
+    });
+    renderCards(type==="all"?all:all.filter(function(e){return(e.type||"").toLowerCase()===type;}));
+  };
+
+  function showErr(msg){
+    document.getElementById("er-state").innerHTML='<div style="color:#ffe0d6;font-size:13px;">'+msg+'</div>'
+      +'<button onclick="erLoad()" style="font-size:12px;color:#fff;background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:6px;font-family:\'DM Sans\',sans-serif;">Try again</button>';
+  }
+
+  window.erLoad=async function(){
+    var s=document.getElementById("er-state");
+    s.style.display="block";
+    s.innerHTML='<div class="er-spin" style="display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;margin-bottom:8px;"></div><br>Loading events…';
+    document.getElementById("er-cards").innerHTML="";
+    document.getElementById("er-filters").style.display="none";
+    document.getElementById("er-count").innerHTML="";
+    try{
+      var res=await fetch(API);
+      if(!res.ok) throw new Error("HTTP "+res.status);
+      all=await res.json();
+      if(!all.length) throw new Error("Sheet empty — check headers: month, day, name, desc, time, type");
+      s.style.display="none";
+      renderFilters(all);
+      renderCards(all);
+    }catch(e){ showErr("Couldn't load events: "+e.message); }
+  };
+
+  erLoad();
+})();
+</script>
