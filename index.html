@@ -8,7 +8,7 @@
   <div id="er-state" style="text-align:center;padding:40px 0;color:#555;font-size:14px;font-family:Arial,sans-serif;">
     <div class="er-spin" style="display:inline-block;width:18px;height:18px;border:2px solid #ddd;border-top-color:#F1592A;border-radius:50%;margin-bottom:8px;"></div><br>Loading events…
   </div>
-  <div id="er-cards" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;"></div>
+  <div id="er-cards" style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;justify-content:center;"></div>
 </div>
 
 <script>
@@ -40,7 +40,7 @@
       // Date + Name
       +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
         +'<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">'
-          +'<div style="font-size:30px;font-weight:800;color:#fff;line-height:0.6;font-family:Arial,sans-serif;">'+(ev.day||'—')+'</div>'
+          +'<div style="font-size:30px;font-weight:800;color:#fff;line-height:0.8;font-family:Arial,sans-serif;">'+(ev.day||'—')+'</div>'
           +'<div style="font-size:14px;font-weight:800;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;font-family:Arial,sans-serif;">'+(ev.month||'')+'</div>'
         +'</div>'
         +'<div style="font-size:22px;font-weight:800;color:#fff;line-height:1.2;text-transform:uppercase;font-family:Arial,sans-serif;">'+(ev.name||'Untitled Event')+'</div>'
